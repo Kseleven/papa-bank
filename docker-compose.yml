@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: kids
+      POSTGRES_PASSWORD: kids
+      POSTGRES_DB: kidsbank
+      TZ: Asia/Shanghai
+    volumes:
+      - papa-bank_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kids -d kidsbank"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: "postgres://kids:kids@db:5432/kidsbank?sslmode=disable"
+      TZ: Asia/Shanghai
+    ports:
+      - "28080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  papa-bank_pgdata:
+    external: true
+    name: papa-bank_pgdata

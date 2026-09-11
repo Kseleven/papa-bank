@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小小存钱罐 🐷</title>
+<style>
+  :root{--bg:#fff7ed;--card:#fff;--accent:#f97316;--green:#16a34a;--red:#dc2626;--ink:#1f2937;--muted:#6b7280;--line:#fde9d2;}
+  *{box-sizing:border-box;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;}
+  html,body{height:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);padding:12px 16px;overflow:auto;}
+  .wrap{max-width:1080px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;}
+  h1{text-align:center;font-size:22px;margin:2px 0 0;color:var(--accent);}
+  .sub{text-align:center;color:var(--muted);font-size:12px;margin-bottom:10px;}
+  .card{background:var(--card);border-radius:16px;padding:14px;box-shadow:0 4px 14px rgba(249,115,22,.10);}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .tab{padding:6px 13px;border-radius:999px;background:#fff;border:2px solid var(--line);cursor:pointer;font-size:14px;}
+  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .tab.add{border-style:dashed;color:var(--accent);}
+  /* 左右布局 */
+  .cols{display:flex;gap:16px;align-items:flex-start;flex:1;min-height:0;}
+  .col-left{flex:0 0 330px;display:flex;flex-direction:column;gap:12px;}
+  .col-right{flex:1;min-width:0;}
+  @media (max-width:760px){
+    .cols{flex-direction:column;}
+    .col-left{flex:none;width:100%;}
+    .col-right{width:100%;}
+  }
+  .balance{text-align:center;}
+  .balance .name{font-size:14px;color:var(--muted);}
+  .balance .amt{font-size:36px;font-weight:800;color:var(--green);margin:4px 0;}
+  .balance .sub2{font-size:12px;color:var(--muted);}
+  .row{display:flex;gap:8px;margin-top:8px;}
+  input{padding:9px;border:2px solid var(--line);border-radius:11px;font-size:15px;width:100%;}
+  button{cursor:pointer;border:none;border-radius:11px;padding:10px 12px;font-size:15px;font-weight:600;color:#fff;}
+  .b-dep{background:var(--green);} .b-wd{background:var(--red);}
+  .b-ghost{background:#fff;color:var(--accent);border:2px solid var(--accent);}
+  .danger{color:var(--red);background:#fff;border:2px solid var(--red);}
+  .grow{flex:1;}
+  label{font-size:12px;color:var(--muted);display:block;margin:8px 0 3px;}
+  .small{font-size:12px;color:var(--muted);}
+  /* 日历 */
+  .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .calhead button{background:var(--accent);padding:5px 12px;}
+  .calhead .m{font-size:16px;font-weight:700;}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .dow{text-align:center;font-size:12px;color:var(--muted);padding:2px 0;}
+  .cell{aspect-ratio:1;border-radius:10px;background:#fdf3e7;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:1px solid transparent;}
+  .cell.empty{background:transparent;cursor:default;}
+  .cell .d{font-size:12px;color:var(--muted);}
+  .cell .v{font-size:12px;font-weight:700;color:var(--green);margin-top:2px;}
+  .cell.today{border-color:var(--accent);}
+  .legend{font-size:11px;color:var(--muted);margin-top:6px;text-align:center;}
+  /* 弹窗 */
+  .overlay{position:fixed;inset:0;background:rgba(31,41,55,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50;}
+  .overlay.show{display:flex;}
+  .modal{background:var(--card);border-radius:16px;width:100%;max-width:640px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.25);}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line);}
+  .modal-head h3{margin:0;font-size:16px;}
+  .modal-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:0 4px;}
+  .modal-body{overflow:auto;padding:6px 18px 18px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{color:var(--muted);position:sticky;top:0;background:var(--card);}
+  .note{color:var(--muted);max-width:180px;}
+  .note .txt{display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;cursor:pointer;}
+  .note.open .txt{white-space:normal;word-break:break-all;max-width:none;}
+  .pos{color:var(--green);} .neg{color:var(--red);}
+  .editbtn{background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;padding:2px 4px;font-weight:400;}
+  /* 分页栏 */
+  .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap;font-size:13px;color:var(--muted);}
+  .pager .ctrl{display:flex;align-items:center;gap:6px;}
+  .pager button{background:var(--accent);padding:5px 11px;font-size:13px;}
+  .pager button:disabled{background:#e5e7eb;color:#9ca3af;cursor:default;}
+  .pager select{padding:5px 8px;border:2px solid var(--line);border-radius:9px;font-size:13px;width:auto;}
+  .hide{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🐷 小小存钱罐</h1>
+  <div class="sub">存钱有利息,养成储蓄好习惯</div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="cols" id="cols">
+    <!-- 左侧:存取 + 设置 + 明细入口 -->
+    <div class="col-left">
+      <div id="opCard" class="card">
+        <div class="balance">
+          <div class="name" id="accName"></div>
+          <div class="amt" id="balance">¥0.00</div>
+          <div class="sub2" id="meta"></div>
+        </div>
+        <label>金额</label>
+        <input type="number" id="opAmount" placeholder="输入金额" min="0" step="0.01">
+        <label>备注(可选)</label>
+        <input type="text" id="opNote" placeholder="例如:压岁钱 / 买玩具">
+        <div class="row">
+          <button class="b-dep grow" onclick="op('deposit')">💰 存入</button>
+          <button class="b-wd grow" onclick="op('withdraw')">🏧 取出</button>
+        </div>
+        <div class="row">
+          <button class="b-ghost grow" onclick="openHist()">📜 查看明细</button>
+          <button class="b-ghost grow" onclick="toggle('settings')">⚙️ 利率</button>
+        </div>
+        <div id="settings" class="hide" style="margin-top:10px;">
+          <label>月利率 (%) — 每30天的利率</label>
+          <input type="number" id="rate" step="0.1" min="0">
+          <div class="small" style="margin-top:6px;">设10%表示每30天余额×1.1,按等价日利率每天复利滚动。</div>
+          <div class="row">
+            <button class="b-ghost grow" onclick="saveRate()">保存利率</button>
+            <button class="danger grow" onclick="delAcc()">删除账户</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧:日历 -->
+    <div class="col-right">
+      <div id="calCard" class="card">
+        <div class="calhead">
+          <button onclick="moveMonth(-1)">‹</button>
+          <div class="m" id="calMonth"></div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button style="padding:5px 10px;font-size:13px;background:#fff;color:var(--accent);border:2px solid var(--accent);" onclick="goToday()">回到今天</button>
+            <button onclick="moveMonth(1)">›</button>
+          </div>
+        </div>
+        <div class="grid" id="dows"></div>
+        <div class="grid" id="calGrid"></div>
+        <div class="legend">点开每一天,看看钱长大了多少 🌱 · 绿色越深表示当天总额越高</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 明细弹窗 -->
+<div class="overlay" id="histOverlay" onclick="if(event.target===this)closeHist()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="histTitle">📜 存取明细</h3>
+      <button class="modal-close" onclick="closeHist()">×</button>
+    </div>
+    <div class="modal-body">
+      <table><thead><tr><th>时间</th><th>类型</th><th>金额</th><th>余额</th><th>备注</th><th></th></tr></thead>
+      <tbody id="histRows"></tbody></table>
+    </div>
+    <div class="pager" id="pager">
+      <div class="ctrl">
+        每页
+        <select id="pageSize" onchange="setPageSize()">
+          <option value="10">10</option>
+          <option value="20" selected>20</option>
+          <option value="30">30</option>
+          <option value="50">50</option>
+        </select>
+        条
+      </div>
+      <div class="ctrl">
+        <button id="prevPage" onclick="gotoPage(histPage-1)">‹ 上一页</button>
+        <span id="pageInfo"></span>
+        <button id="nextPage" onclick="gotoPage(histPage+1)">下一页 ›</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API='/api';
+let accounts=[], cur=null;
+let calYear, calMonth;
+let histRecs=[], histPage=1, histPageSize=20;
+
+async function j(url,opt){const r=await fetch(url,opt);if(!r.ok){const e=await r.json().catch(()=>({error:r.statusText}));throw new Error(e.error||'错误');}return r.status===204?null:r.json();}
+function fmt(n){return '¥'+Number(n).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function pad(x){return String(x).padStart(2,'0');}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+async function loadAccounts(){
+  accounts=await j(API+'/accounts');
+  if(accounts.length && (cur===null || !accounts.find(a=>a.id===cur))) cur=accounts[0].id;
+  render();
+}
+async function newAccount(){
+  const name=prompt('孩子的名字?'); if(!name)return;
+  const rate=parseFloat(prompt('月利率(%),例如 10','10'))||0;
+  const a=await j(API+'/accounts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,monthly_rate:rate})});
+  cur=a.id; await loadAccounts();
+}
+async function op(type){
+  if(cur===null)return;
+  const amt=parseFloat(document.getElementById('opAmount').value);
+  if(!(amt>0)){alert('请输入大于0的金额');return;}
+  const note=document.getElementById('opNote').value.trim();
+  try{
+    await j(API+`/accounts/${cur}/tx`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,amount:amt,note})});
+    document.getElementById('opAmount').value='';
+    document.getElementById('opNote').value='';
+    await refresh();
+  }catch(e){alert(e.message);}
+}
+async function saveRate(){
+  const rate=parseFloat(document.getElementById('rate').value)||0;
+  await j(API+`/accounts/${cur}/rate`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({monthly_rate:rate})});
+  await refresh();
+}
+async function delAcc(){
+  if(cur===null)return;
+  const a=accounts.find(x=>x.id===cur);
+  if(!confirm('确定删除「'+a.name+'」及全部记录?'))return;
+  await j(API+`/accounts/${cur}`,{method:'DELETE'});
+  cur=null; await loadAccounts();
+}
+async function editNote(id,old){
+  const nv=prompt('修改备注:',old||'');
+  if(nv===null)return;
+  await j(API+`/tx/${id}/note`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({note:nv.trim()})});
+  await loadHistory(true);
+}
+function toggle(id){document.getElementById(id).classList.toggle('hide');}
+function selectAcc(id){cur=id;refresh();}
+async function refresh(){ await loadAccounts(); }
+
+// 弹窗
+function openHist(){
+  if(cur===null)return;
+  const a=accounts.find(x=>x.id===cur);
+  document.getElementById('histTitle').textContent=`📜 ${a.name} 的存取明细`;
+  document.getElementById('histOverlay').classList.add('show');
+  loadHistory();
+}
+function closeHist(){document.getElementById('histOverlay').classList.remove('show');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeHist();});
+
+function render(){
+  const tabs=document.getElementById('tabs');tabs.innerHTML='';
+  accounts.forEach(a=>{
+    const t=document.createElement('div');
+    t.className='tab'+(a.id===cur?' active':'');
+    t.textContent=a.name; t.onclick=()=>selectAcc(a.id);
+    tabs.appendChild(t);
+  });
+  const add=document.createElement('div');
+  add.className='tab add';add.textContent='+ 添加孩子';add.onclick=newAccount;
+  tabs.appendChild(add);
+
+  const cols=document.getElementById('cols');
+  if(cur===null){cols.style.display='none';return;}
+  cols.style.display='';
+
+  const a=accounts.find(x=>x.id===cur);
+  document.getElementById('accName').textContent=a.name+' 的存钱罐';
+  document.getElementById('balance').textContent=fmt(a.balance);
+  const f=Math.pow(1+a.monthly_rate/100,1/30);
+  document.getElementById('meta').textContent=
+    `月利率 ${a.monthly_rate}% · 30天后约 ${fmt(a.balance*(1+a.monthly_rate/100))} · 每天约 +${fmt(a.balance*(f-1))}`;
+  document.getElementById('rate').value=a.monthly_rate;
+
+  if(calYear===undefined){const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();}
+  loadCalendar();
+}
+
+async function loadHistory(keepPage){
+  if(cur===null)return;
+  histRecs=await j(API+`/accounts/${cur}/tx`);
+  if(!keepPage)histPage=1;
+  renderHistPage();
+}
+function setPageSize(){
+  histPageSize=parseInt(document.getElementById('pageSize').value,10);
+  histPage=1; renderHistPage();
+}
+function gotoPage(p){
+  const pages=Math.max(1,Math.ceil(histRecs.length/histPageSize));
+  histPage=Math.min(Math.max(1,p),pages); renderHistPage();
+}
+function renderHistPage(){
+  const tb=document.getElementById('histRows');tb.innerHTML='';
+  const total=histRecs.length;
+  const pages=Math.max(1,Math.ceil(total/histPageSize));
+  if(histPage>pages)histPage=pages;
+  if(!total){
+    tb.innerHTML='<tr><td colspan="6" class="small">还没有记录,先存入一笔吧!</td></tr>';
+    document.getElementById('pageInfo').textContent='0 条';
+    document.getElementById('prevPage').disabled=true;
+    document.getElementById('nextPage').disabled=true;
+    return;
+  }
+  const start=(histPage-1)*histPageSize;
+  const slice=histRecs.slice(start,start+histPageSize);
+  slice.forEach(e=>{
+    const d=new Date(e.ts);
+    const tr=document.createElement('tr');
+    const cls=e.type==='deposit'?'pos':'neg', s=e.type==='deposit'?'+':'-', label=e.type==='deposit'?'存入':'取出';
+    const noteHtml=e.note?`<span class="txt" title="点击展开/收起">${esc(e.note)}</span>`:'<span class="small">—</span>';
+    tr.innerHTML=`<td>${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}</td>
+      <td>${label}</td><td class="${cls}">${s}${fmt(e.amount)}</td><td>${fmt(e.balance)}</td>
+      <td class="note">${noteHtml}</td>
+      <td><button class="editbtn" title="修改备注">✏️</button></td>`;
+    const noteCell=tr.querySelector('.note');
+    const txt=noteCell.querySelector('.txt');
+    if(txt)txt.onclick=()=>noteCell.classList.toggle('open');
+    tr.querySelector('.editbtn').onclick=()=>editNote(e.id,e.note);
+    tb.appendChild(tr);
+  });
+  document.getElementById('pageInfo').textContent=`第 ${histPage}/${pages} 页 · 共 ${total} 条`;
+  document.getElementById('prevPage').disabled=histPage<=1;
+  document.getElementById('nextPage').disabled=histPage>=pages;
+}
+
+function moveMonth(d){
+  calMonth+=d;
+  if(calMonth<0){calMonth=11;calYear--;}
+  if(calMonth>11){calMonth=0;calYear++;}
+  loadCalendar();
+}
+function goToday(){
+  const n=new Date();
+  calYear=n.getFullYear();calMonth=n.getMonth();
+  loadCalendar();
+}
+async function loadCalendar(){
+  document.getElementById('calMonth').textContent=`${calYear}年${calMonth+1}月`;
+  document.getElementById('dows').innerHTML=['日','一','二','三','四','五','六'].map(d=>`<div class="dow">${d}</div>`).join('');
+  const first=new Date(calYear,calMonth,1);
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const from=`${calYear}-${pad(calMonth+1)}-01`;
+  const to=`${calYear}-${pad(calMonth+1)}-${pad(daysInMonth)}`;
+  let data=[];
+  try{ data=await j(API+`/accounts/${cur}/daily?from=${from}&to=${to}`); }catch(e){}
+  const map={}; data.forEach(p=>map[p.date]=p.balance);
+  const max=Math.max(1,...data.map(p=>p.balance));
+
+  const grid=document.getElementById('calGrid');grid.innerHTML='';
+  for(let i=0;i<first.getDay();i++){const c=document.createElement('div');c.className='cell empty';grid.appendChild(c);}
+  const n=new Date();const todayStr=`${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`;
+  for(let day=1;day<=daysInMonth;day++){
+    const ds=`${calYear}-${pad(calMonth+1)}-${pad(day)}`;
+    const bal=map[ds];
+    const c=document.createElement('div');
+    c.className='cell'+(ds===todayStr?' today':'');
+    if(bal!==undefined && bal>0){
+      const ratio=bal/max;
+      c.style.background=`rgba(22,163,74,${0.10+ratio*0.45})`;
+      c.innerHTML=`<div class="d">${day}</div><div class="v">${bal>=1000?(bal/1000).toFixed(1)+'k':Math.round(bal)}</div>`;
+    }else{
+      c.innerHTML=`<div class="d">${day}</div>`;
+    }
+    c.onclick=()=>{
+      if(bal===undefined){alert(`${ds}\n该日尚无数据`);return;}
+      alert(`${ds}\n当天总金额: ${fmt(bal)}`);
+    };
+    grid.appendChild(c);
+  }
+}
+
+loadAccounts().catch(e=>document.body.insertAdjacentHTML('afterbegin','<div class="card" style="color:#dc2626">连接后端失败: '+e.message+'</div>'));
+</script>
+</body>
+</html>
