@@ -135,6 +135,32 @@
   </div>
 </div>
 
+<!-- 单日明细弹窗 -->
+<div class="overlay" id="dayOverlay" onclick="if(event.target===this)closeDay()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="dayTitle">📅 当日明细</h3>
+      <button class="modal-close" onclick="closeDay()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="daySummary" class="small" style="margin:6px 0 10px;"></div>
+      <div style="background:#fdf3e7;border-radius:12px;padding:10px 12px;margin-bottom:12px;">
+        <div class="small" style="margin-bottom:6px;">✏️ 给这一天补录一笔</div>
+        <div class="row" style="margin-top:0;">
+          <input type="number" id="dayOpAmount" class="grow" placeholder="金额" min="0" step="0.01">
+          <input type="text" id="dayOpNote" class="grow" placeholder="备注(可选)">
+        </div>
+        <div class="row">
+          <button class="b-dep grow" onclick="opOnDay('deposit')">💰 存入</button>
+          <button class="b-wd grow" onclick="opOnDay('withdraw')">🏧 取出</button>
+        </div>
+      </div>
+      <table><thead><tr><th>时间</th><th>类型</th><th>金额</th><th>余额</th><th>备注</th><th></th></tr></thead>
+      <tbody id="dayRows"></tbody></table>
+    </div>
+  </div>
+</div>
+
 <!-- 明细弹窗 -->
 <div class="overlay" id="histOverlay" onclick="if(event.target===this)closeHist()">
   <div class="modal">
@@ -171,6 +197,7 @@ const API='/api';
 let accounts=[], cur=null;
 let calYear, calMonth;
 let histRecs=[], histPage=1, histPageSize=20;
+let curDay=null;
 
 async function j(url,opt){const r=await fetch(url,opt);if(!r.ok){const e=await r.json().catch(()=>({error:r.statusText}));throw new Error(e.error||'错误');}return r.status===204?null:r.json();}
 function fmt(n){return '¥'+Number(n).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});}
@@ -231,7 +258,82 @@ function openHist(){
   loadHistory();
 }
 function closeHist(){document.getElementById('histOverlay').classList.remove('show');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeHist();});
+function closeDay(){document.getElementById('dayOverlay').classList.remove('show');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeHist();closeDay();}});
+
+async function openDay(ds,bal){
+  if(cur===null)return;
+  curDay=ds;
+  const a=accounts.find(x=>x.id===cur);
+  document.getElementById('dayTitle').textContent=`📅 ${a.name} · ${ds}`;
+  document.getElementById('dayOverlay').classList.add('show');
+  document.getElementById('dayOpAmount').value='';
+  document.getElementById('dayOpNote').value='';
+  const tb=document.getElementById('dayRows');
+  const sum=document.getElementById('daySummary');
+  tb.innerHTML='<tr><td colspan="6" class="small">加载中…</td></tr>';
+  sum.textContent='';
+  let recs=[];
+  try{ recs=await j(API+`/accounts/${cur}/tx`); }catch(e){
+    tb.innerHTML=`<tr><td colspan="6" class="small">加载失败: ${esc(e.message)}</td></tr>`;
+    return;
+  }
+  const dayRecs=recs.filter(e=>{
+    const d=new Date(e.ts);
+    const s=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    return s===ds;
+  });
+  let inSum=0,outSum=0;
+  dayRecs.forEach(e=>{ if(e.type==='deposit')inSum+=e.amount; else outSum+=e.amount; });
+  const balTxt=(bal!==undefined)?` · 当日结余 ${fmt(bal)}`:'';
+  sum.textContent=`共 ${dayRecs.length} 笔 · 存入 ${fmt(inSum)} · 取出 ${fmt(outSum)}${balTxt}`;
+  tb.innerHTML='';
+  if(!dayRecs.length){
+    tb.innerHTML='<tr><td colspan="6" class="small">这一天还没有存取记录哦~</td></tr>';
+    return;
+  }
+  dayRecs.forEach(e=>{
+    const d=new Date(e.ts);
+    const tr=document.createElement('tr');
+    const cls=e.type==='deposit'?'pos':'neg', s=e.type==='deposit'?'+':'-', label=e.type==='deposit'?'存入':'取出';
+    const noteHtml=e.note?`<span class="txt" title="点击展开/收起">${esc(e.note)}</span>`:'<span class="small">—</span>';
+    tr.innerHTML=`<td>${pad(d.getHours())}:${pad(d.getMinutes())}</td>
+      <td>${label}</td><td class="${cls}">${s}${fmt(e.amount)}</td><td>${fmt(e.balance)}</td>
+      <td class="note">${noteHtml}</td>
+      <td><button class="editbtn" title="修改备注">✏️</button></td>`;
+    const noteCell=tr.querySelector('.note');
+    const txt=noteCell.querySelector('.txt');
+    if(txt)txt.onclick=()=>noteCell.classList.toggle('open');
+    tr.querySelector('.editbtn').onclick=async()=>{ await editNoteDay(e.id,e.note,ds,bal); };
+    tb.appendChild(tr);
+  });
+}
+async function opOnDay(type){
+  if(cur===null||!curDay)return;
+  const amt=parseFloat(document.getElementById('dayOpAmount').value);
+  if(!(amt>0)){alert('请输入大于0的金额');return;}
+  const note=document.getElementById('dayOpNote').value.trim();
+  try{
+    await j(API+`/accounts/${cur}/tx`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({type,amount:amt,note,date:curDay})});
+    document.getElementById('dayOpAmount').value='';
+    document.getElementById('dayOpNote').value='';
+    await loadAccounts();      // 刷新左侧余额和日历数据
+    // 拉当天最新结余
+    let newBal;
+    try{
+      const dp=await j(API+`/accounts/${cur}/daily?from=${curDay}&to=${curDay}`);
+      if(dp && dp.length) newBal=dp[0].balance;
+    }catch(e){}
+    await openDay(curDay,newBal);
+  }catch(e){alert(e.message);}
+}
+async function editNoteDay(id,old,ds,bal){
+  const nv=prompt('修改备注:',old||'');
+  if(nv===null)return;
+  await j(API+`/tx/${id}/note`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({note:nv.trim()})});
+  await openDay(ds,bal);
+}
 
 function render(){
   const tabs=document.getElementById('tabs');tabs.innerHTML='';
@@ -347,10 +449,7 @@ async function loadCalendar(){
     }else{
       c.innerHTML=`<div class="d">${day}</div>`;
     }
-    c.onclick=()=>{
-      if(bal===undefined){alert(`${ds}\n该日尚无数据`);return;}
-      alert(`${ds}\n当天总金额: ${fmt(bal)}`);
-    };
+    c.onclick=()=>openDay(ds,bal);
     grid.appendChild(c);
   }
 }

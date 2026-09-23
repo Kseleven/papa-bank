@@ -236,6 +236,7 @@ func createTx(w http.ResponseWriter, r *http.Request) {
 		Type   string  `json:"type"`
 		Amount float64 `json:"amount"`
 		Note   string  `json:"note"`
+		Date   string  `json:"date"` // 可选: YYYY-MM-DD, 补录当天记录
 	}
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		httpErr(w, 400, "无效请求")
@@ -250,15 +251,32 @@ func createTx(w http.ResponseWriter, r *http.Request) {
 		httpErr(w, 404, "账户不存在")
 		return
 	}
+	// 解析可选的补录日期. 若提供, 使用当天 12:00 本地时间;
+	// 若是今天, 则用当前时间以便与其他今日记录顺序一致.
+	ts := time.Now()
+	if in.Date != "" {
+		d, err := time.ParseInLocation("2006-01-02", in.Date, loc)
+		if err != nil {
+			httpErr(w, 400, "date 需为 YYYY-MM-DD")
+			return
+		}
+		now := time.Now().In(loc)
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+		if d.Equal(today) {
+			ts = now
+		} else {
+			ts = time.Date(d.Year(), d.Month(), d.Day(), 12, 0, 0, 0, loc)
+		}
+	}
 	if in.Type == "withdraw" {
 		txs, _ := loadTx(id)
-		if balanceAt(txs, rate, time.Now()) < in.Amount-1e-9 {
-			httpErr(w, 400, "余额不足")
+		if balanceAt(txs, rate, ts) < in.Amount-1e-9 {
+			httpErr(w, 400, "该时点余额不足")
 			return
 		}
 	}
-	if _, err := db.Exec(`INSERT INTO transactions(account_id, type, amount, note) VALUES($1,$2,$3,$4)`,
-		id, in.Type, in.Amount, in.Note); err != nil {
+	if _, err := db.Exec(`INSERT INTO transactions(account_id, type, amount, note, ts) VALUES($1,$2,$3,$4,$5)`,
+		id, in.Type, in.Amount, in.Note, ts); err != nil {
 		httpErr(w, 500, err.Error())
 		return
 	}
