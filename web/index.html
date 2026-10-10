@@ -74,6 +74,59 @@
   .pager button:disabled{background:#e5e7eb;color:#9ca3af;cursor:default;}
   .pager select{padding:5px 8px;border:2px solid var(--line);border-radius:9px;font-size:13px;width:auto;}
   .hide{display:none;}
+  /* 成长小结：暖色手账与奖励贴纸 */
+  .summary-switch{display:flex;gap:8px;margin:14px 0 8px;}
+  .summary-switch button{flex:1;background:#fff;color:var(--accent);border:2px solid var(--line);}
+  .summary-switch button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .summary-nav{display:flex;align-items:center;gap:8px;margin:10px 0 6px;}
+  .summary-nav button{flex:none;padding:7px 12px;background:#fff;color:var(--accent);border:2px solid var(--line);}
+  .summary-nav .summary-date-display{flex:1;min-width:0;overflow:hidden;padding:8px 6px;background:#fff7ed;color:var(--ink);border-color:var(--line);font-size:14px;text-overflow:ellipsis;white-space:nowrap;}
+  .summary-nav .summary-date-display:hover{background:#fff;border-color:var(--accent);}
+  .summary-nav input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+  .summary-nav button:disabled{color:#9ca3af;background:#f3f4f6;cursor:default;}
+  .summary-nav .summary-today{font-size:12px;padding:7px 9px;}
+  .summary-modal{max-width:980px;max-height:90vh;}
+  .summary-modal .modal-body{padding:8px 22px 18px;}
+  .summary-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);gap:22px;align-items:start;}
+  .summary-main,.summary-aside{min-width:0;}
+  .summary-aside{position:sticky;top:0;}
+  .summary-hero{position:relative;margin:12px 0;padding:18px;border:2px solid #fbd38d;border-radius:16px;background:linear-gradient(125deg,#fff8dc,#fff0d9);}
+  .summary-hero .kicker{font-size:12px;color:#9a5310;letter-spacing:2px;}
+  .summary-hero h4{margin:10px 0;font-size:22px;color:#92400e;line-height:1.4;overflow-wrap:anywhere;}
+  .summary-hero p{margin:0;color:#9a5310;font-size:14px;line-height:1.7;}
+  .summary-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0;}
+  .summary-stat{padding:12px 6px;border-radius:12px;background:#f0fdf4;text-align:center;}
+  .summary-stat strong{display:block;color:#15803d;font-size:20px;overflow-wrap:anywhere;}
+  .summary-stat.outcome{background:#fff1f2;}
+  .summary-stat.outcome strong{color:#dc2626;}
+  .summary-stat.net{background:#fff7ed;}
+  .summary-stat.net strong{color:#c2410c;}
+  .summary-stat span{display:block;margin-top:5px;font-size:12px;color:var(--muted);}
+  .summary-section{margin-top:18px;}
+  .summary-section h5{margin:0;padding-bottom:4px;font-size:14px;color:var(--ink);}
+  .summary-impact{margin-top:18px;padding:14px;border:2px solid #bfdbfe;border-radius:14px;background:#eff6ff;}
+  .summary-impact h5{margin:0;color:#1e40af;font-size:14px;}
+  .summary-impact p{margin:7px 0 12px;color:#475569;font-size:12px;line-height:1.7;}
+  .summary-impact-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;}
+  .summary-impact-item{padding:9px 5px;border-radius:10px;background:#fff;text-align:center;}
+  .summary-impact-item strong{display:block;color:#1d4ed8;font-size:15px;overflow-wrap:anywhere;}
+  .summary-impact-item span{display:block;margin-top:4px;color:#64748b;font-size:11px;}
+  .summary-impact-item em{display:block;margin-top:3px;color:#16a34a;font-size:11px;font-style:normal;}
+  .summary-tip{margin-top:14px;padding:14px;border-radius:14px;background:#f0fdf4;border:2px solid #bbf7d0;color:#166534;}
+  .summary-tip h5{margin:0 0 6px;font-size:14px;}
+  .summary-tip p{margin:0;font-size:12px;line-height:1.7;}
+  .summary-activity{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px dashed var(--line);}
+  .summary-badge{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#fff2d6;font-size:20px;}
+  .summary-activity .grow{min-width:0;}
+  .summary-activity strong{display:block;overflow-wrap:anywhere;font-size:15px;line-height:1.6;}
+  .summary-activity .small{margin-top:3px;line-height:1.6;}
+  .summary-amount{flex:none;color:var(--green);font-weight:700;font-size:16px;}
+  .summary-amount.outcome{color:var(--red);}
+  .summary-foot{margin-top:16px;font-size:12px;color:var(--muted);line-height:1.7;}
+  .summary-empty{text-align:center;padding:24px 12px;line-height:1.8;color:var(--muted);}
+  .summary-error{padding:20px 0;color:var(--red);}
+  @media(max-width:760px){.summary-layout{grid-template-columns:1fr;gap:4px;}.summary-aside{position:static;}.summary-impact{margin-top:14px;}}
+  @media(max-width:420px){.summary-activity{flex-wrap:wrap;}.summary-amount{margin-left:52px;}.summary-stat strong{font-size:17px;}.summary-nav{flex-wrap:wrap;}.summary-nav .summary-today{margin-left:auto;}.summary-modal .modal-body{padding-left:16px;padding-right:16px;}}
 </style>
 </head>
 <body>
@@ -104,6 +157,9 @@
           <button class="b-ghost grow" onclick="openHist()">📜 查看明细</button>
           <button class="b-ghost grow" onclick="toggle('settings')">⚙️ 利率</button>
         </div>
+        <div class="row">
+          <button id="summaryOpen" class="b-ghost grow" onclick="openSummary()">🌟 总结 · 看看我的进步</button>
+        </div>
         <div id="settings" class="hide" style="margin-top:10px;">
           <label>月利率 (%) — 每30天的利率</label>
           <input type="number" id="rate" step="0.1" min="0">
@@ -131,6 +187,32 @@
         <div class="grid" id="calGrid"></div>
         <div class="legend">点开每一天,看看钱长大了多少 🌱 · 绿色越深表示当天总额越高</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 本周 / 本月成长小结 -->
+<div class="overlay" id="summaryOverlay" onclick="if(event.target===this)closeSummary()">
+  <div class="modal summary-modal" role="dialog" aria-modal="true" aria-labelledby="summaryTitle">
+    <div class="modal-head">
+      <h3 id="summaryTitle">🌟 成长小结</h3>
+      <button id="summaryClose" class="modal-close" aria-label="关闭总结" onclick="closeSummary()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="summary-switch" role="group" aria-label="总结时间范围">
+        <button id="summaryWeek" aria-pressed="false" onclick="setSummaryPeriod('week')">周总结</button>
+        <button id="summaryMonth" aria-pressed="true" onclick="setSummaryPeriod('month')">月总结</button>
+      </div>
+      <div class="summary-nav" aria-label="选择总结时间">
+        <button type="button" aria-label="上一个时间段" onclick="shiftSummary(-1)">‹</button>
+        <button id="summaryPickerDisplay" type="button" class="summary-date-display" onclick="openSummaryPicker()" aria-label="选择总结月份">2026年10月</button>
+        <input id="summaryPicker" type="month" onchange="selectSummaryDate(this.value)" aria-label="选择总结月份">
+        <button id="summaryNext" type="button" aria-label="下一个时间段" onclick="shiftSummary(1)">›</button>
+        <button type="button" class="summary-today" onclick="summaryToday()">回到现在</button>
+      </div>
+      <div id="summaryRange" class="small"></div>
+      <div id="summaryContent" aria-live="polite"></div>
+      <div class="summary-foot">存入和取出都会按备注分别汇总，每笔计 1 次；利息不计入。未填写备注的记录单独列出。记录奖励或支出时使用相同活动名称，就能看清自己的收获和使用情况啦！</div>
     </div>
   </div>
 </div>
@@ -192,12 +274,18 @@
   </div>
 </div>
 
+<!-- 版本号用于避免浏览器继续使用旧的总结逻辑缓存。 -->
+<script src="/summary.js?v=20261009-3"></script>
 <script>
 const API='/api';
 let accounts=[], cur=null;
 let calYear, calMonth;
 let histRecs=[], histPage=1, histPageSize=20;
 let curDay=null;
+let summaryRecs=[], summaryMode='month', summaryState='idle', summaryRequest=0;
+let summaryFocus=null;
+let summaryAnchor=new Date();
+let summaryRate=0;
 
 async function j(url,opt){const r=await fetch(url,opt);if(!r.ok){const e=await r.json().catch(()=>({error:r.statusText}));throw new Error(e.error||'错误');}return r.status===204?null:r.json();}
 function fmt(n){return '¥'+Number(n).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});}
@@ -259,7 +347,123 @@ function openHist(){
 }
 function closeHist(){document.getElementById('histOverlay').classList.remove('show');}
 function closeDay(){document.getElementById('dayOverlay').classList.remove('show');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeHist();closeDay();}});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeHist();closeDay();closeSummary();}
+  if(e.key==='Tab' && document.getElementById('summaryOverlay').classList.contains('show')){
+    const controls=[...document.querySelectorAll('#summaryOverlay button:not(:disabled), #summaryOverlay input')];
+    const first=controls[0], last=controls[controls.length-1];
+    if(e.shiftKey && document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey && document.activeElement===last){e.preventDefault();first.focus();}
+  }
+});
+
+async function openSummary(){
+  if(cur===null)return;
+  const a=accounts.find(x=>x.id===cur);
+  if(!a)return;
+  const request=++summaryRequest;
+  const accountID=cur;
+  summaryRate=a.monthly_rate;
+  summaryFocus=document.activeElement;
+  document.getElementById('summaryTitle').textContent=`🌟 ${a.name} 的成长小结`;
+  document.getElementById('summaryOverlay').classList.add('show');
+  document.getElementById('summaryClose').focus();
+  summaryState='loading'; summaryRecs=[];
+  renderSummary();
+  try{
+    const records=await j(API+`/accounts/${accountID}/tx`);
+    if(request!==summaryRequest)return;
+    summaryRecs=records; summaryState='ready'; renderSummary();
+  }catch(e){
+    if(request!==summaryRequest)return;
+    summaryState='error';
+    document.getElementById('summaryContent').innerHTML=`<div class="summary-error">总结暂时加载失败：${esc(e.message)}</div><button class="b-ghost" onclick="openSummary()">重新加载</button>`;
+  }
+}
+function closeSummary(){
+  const overlay=document.getElementById('summaryOverlay');
+  if(!overlay.classList.contains('show'))return;
+  overlay.classList.remove('show'); summaryRequest++;
+  const opener=document.getElementById('summaryOpen');
+  if(summaryFocus && !overlay.contains(summaryFocus))summaryFocus.focus();
+  else opener.focus();
+}
+function dateKey(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+function monthKey(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}`;}
+function selectedSummaryDate(){return summaryMode==='month' ? monthKey(summaryAnchor) : dateKey(summaryAnchor);}
+function setSummaryPeriod(period){summaryMode=period;renderSummary();}
+function openSummaryPicker(){
+  const picker=document.getElementById('summaryPicker');
+  if(typeof picker.showPicker==='function')picker.showPicker();
+  else picker.click();
+}
+function shiftSummary(direction){
+  const next=shiftSummaryDate(summaryMode,summaryAnchor,direction);
+  const now=new Date();
+  if(next.getTime()>now.getTime())return;
+  summaryAnchor=next;
+  renderSummary();
+}
+function selectSummaryDate(value){
+  const pattern=summaryMode==='month'?/^\d{4}-\d{2}$/:/^\d{4}-\d{2}-\d{2}$/;
+  if(!pattern.test(value)){renderSummary();return;}
+  const parts=value.split('-').map(Number);
+  const selected=new Date(parts[0],parts[1]-1,parts[2]||1);
+  const key=summaryMode==='month'?monthKey(selected):dateKey(selected);
+  if(key===value && selected<=new Date())summaryAnchor=selected;
+  renderSummary();
+}
+function summaryToday(){summaryAnchor=new Date();renderSummary();}
+function renderSummary(){
+  document.getElementById('summaryWeek').setAttribute('aria-pressed',String(summaryMode==='week'));
+  document.getElementById('summaryMonth').setAttribute('aria-pressed',String(summaryMode==='month'));
+  const picker=document.getElementById('summaryPicker');
+  const pickerDisplay=document.getElementById('summaryPickerDisplay');
+  const now=new Date();
+  picker.type=summaryMode==='month'?'month':'date';
+  picker.value=selectedSummaryDate();
+  picker.max=summaryMode==='month'?monthKey(now):dateKey(now);
+  picker.setAttribute('aria-label',summaryMode==='month'?'选择总结月份':'选择总结周内日期');
+  const displayDate=d=>`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  pickerDisplay.textContent=summaryMode==='month'
+    ? `${summaryAnchor.getFullYear()}年${summaryAnchor.getMonth()+1}月`
+    : displayDate(summaryAnchor);
+  pickerDisplay.setAttribute('aria-label',summaryMode==='month'?'选择总结月份':'选择总结周内日期');
+  const result=buildSummary(summaryRecs,summaryMode,now,summaryAnchor);
+  const dateText=d=>`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  const isCurrent=result.start.getTime()===summaryPeriod(summaryMode,now).start.getTime();
+  document.getElementById('summaryNext').disabled=isCurrent;
+  document.getElementById('summaryRange').textContent=`${dateText(result.start)} — ${dateText(result.end)}${isCurrent?' · 截至现在':''}${summaryMode==='week'?' · 周一开始':''}`;
+  const content=document.getElementById('summaryContent');
+  if(summaryState==='loading'){content.innerHTML='<div class="summary-empty">正在收集你的成长足迹…</div>';return;}
+  if(summaryState!=='ready')return;
+  const label=isCurrent?(summaryMode==='week'?'本周':'本月'):(summaryMode==='month'?`${summaryAnchor.getFullYear()}年${summaryAnchor.getMonth()+1}月`:'这一周');
+  if(!result.depositCount && !result.withdrawalCount){
+    content.innerHTML=`<div class="summary-hero"><div class="kicker">🌱 每一点进步都值得记录</div><h4>新的成长故事，等你开启！</h4><p>${label}还没有存入或取出记录。下一次获得奖励或使用零花钱时，记下这一步就好啦。</p></div>`;
+    return;
+  }
+  const named=result.depositGroups.filter(group=>!group.unnamed);
+  const renderGroups=(groups,type)=>{
+    if(!groups.length)return '<div class="small" style="padding:8px 0 2px;">这段时间没有记录。</div>';
+    const isDeposit=type==='deposit';
+    return groups.map(group=>`<div class="summary-activity"><div class="summary-badge" aria-hidden="true">${isDeposit?(group.unnamed?'💰':'⭐'):'🛍️'}</div><div class="grow"><strong>${esc(group.name)} × ${group.count} 次</strong><div class="small">${group.unnamed?(isDeposit?'补上备注，让这份收获有自己的名字。':'补上备注，记住这笔支出用在了哪里。'):(isDeposit?'每一次积累，都值得被看见。':'知道钱花在哪里，也是在学习管理小金库。')}</div></div><div class="summary-amount${isDeposit?'':' outcome'}">${isDeposit?'获得':'支出'} ${fmt(group.amount)}</div></div>`).join('');
+  };
+  const namedCount=named.reduce((sum,group)=>sum+group.count,0);
+  const encouragement=named.length?`你留下了 ${namedCount} 次有名字的成长足迹，也记录了 ${result.withdrawalCount} 次支出。每一次认真去做、合理使用，都是成长！`:'你正在一点点积累和管理自己的小金库。给每笔记录加上活动备注，就能记住每一份进步！';
+  const impactPrincipal=opportunityBase(result.withdrawalOpportunityRecords,summaryRate,result.end);
+  const impact=opportunityGrowth(impactPrincipal,summaryRate,result.end);
+  const impactHtml=result.withdrawalAmount>0?`<div class="summary-impact"><h5>📈 支出影响：如果这笔钱留下来</h5><p>按发生时间折算，如果这 ${fmt(result.withdrawalAmount)} 支出一直留在账户里，到 ${result.end.getFullYear()}年${result.end.getMonth()+1}月${result.end.getDate()}日约为 ${fmt(impactPrincipal)}；之后按当前月利率 ${summaryRate}% 继续存下去，可能会变成：</p><div class="summary-impact-grid">${impact.map(item=>`<div class="summary-impact-item"><strong>${fmt(item.total)}</strong><span>${item.label}</span><em>再增加 ${fmt(item.gain)}</em></div>`).join('')}</div></div>`:'<div class="summary-impact"><h5>📈 支出影响</h5><p>记录一笔支出后，这里会帮你看看如果把钱留下来，未来可能多出多少收益。</p></div>';
+  content.innerHTML=`<div class="summary-layout"><div class="summary-main">
+      <div class="summary-hero"><div class="kicker">🏅 我的成长小手账</div><h4>${label}的积累，值得为自己鼓掌！</h4><p>${encouragement}</p></div>
+      <div class="summary-stats">
+        <div class="summary-stat"><strong>${fmt(result.depositAmount)}</strong><span>获得 · ${result.depositCount} 次</span></div>
+        <div class="summary-stat outcome"><strong>${fmt(result.withdrawalAmount)}</strong><span>支出 · ${result.withdrawalCount} 次</span></div>
+        <div class="summary-stat net"><strong>${result.netAmount >= 0 ? '+' + fmt(result.netAmount) : '-' + fmt(Math.abs(result.netAmount))}</strong><span>净变化 · ${result.days} 天有记录</span></div>
+      </div>
+      <div class="summary-section"><h5>💰 获得奖励</h5>${renderGroups(result.depositGroups,'deposit')}</div>
+      <div class="summary-section"><h5>🛍️ 支出记录</h5>${renderGroups(result.withdrawalGroups,'withdraw')}</div>
+    </div><aside class="summary-aside">${impactHtml}<div class="summary-tip"><h5>🌱 小小提醒</h5><p>先想一想，再决定要不要花钱。每一次把钱留下来，都是给未来的自己增加一份选择。</p></div></aside></div>`;
+}
 
 async function openDay(ds,bal){
   if(cur===null)return;
